@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Account;
+use App\Repositories\AccountRepository;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 
@@ -10,6 +11,35 @@ use App\Http\Requests;
 
 class AccountController extends Controller
 {
+
+    /**
+     * The task repository instance.
+     *
+     * @var AccountRepository
+     */
+
+    protected $accounts;
+
+    public function __construct(AccountRepository $accounts)
+    {
+        $this->middleware('auth');
+        $this->accounts = $accounts;
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+
+        return view('home', [
+            'accounts' => $this->accounts->forUser($request->user()),
+            'encrypter' => new Encrypter($request->session()->get('spk'))
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -50,6 +80,8 @@ class AccountController extends Controller
      */
     public function edit(Request $request, Account $account)
     {
+        $this->authorize('owner', $account);
+
         $encrypter  = new Encrypter($request->session()->get('spk'));
         $account->password = $encrypter->decrypt($account->password);
         return view('account.edit', [
@@ -66,6 +98,8 @@ class AccountController extends Controller
      */
     public function update(Request $request, Account $account)
     {
+        $this->authorize('owner', $account);
+
         $this->validate($request, [
             'title' => 'required|max:255',
             'username' => 'required|max:100',
@@ -88,6 +122,8 @@ class AccountController extends Controller
      */
     public function destroy(Account $account)
     {
+        $this->authorize('owner', $account);
+
         return response()->json(['success' => $account->delete()]);
     }
 }

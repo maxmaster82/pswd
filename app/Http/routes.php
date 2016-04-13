@@ -11,7 +11,7 @@
 |
 */
 
-Route::get('/', 'HomeController@index')->name('home');
+Route::get('/', 'AccountController@index')->name('home');
 
 Route::get('password/reset', function(){
     abort(404);
